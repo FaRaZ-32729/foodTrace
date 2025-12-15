@@ -26,9 +26,9 @@ const deviceSchema = new mongoose.Schema(
     apiKey: { type: String, unique: true, required: true },
 
     // alerts
-    frezerAlert: { type: Boolean, default: false },
+    freezerAlert: { type: Boolean, default: false },
     ambientAlert: { type: Boolean, default: false },
-    espFrezer: { type: Number, default: null },
+    espFreezer: { type: Number, default: null },
     espAmbient: { type: Number, default: null },
 
     versionId: { type: String, default: null },
