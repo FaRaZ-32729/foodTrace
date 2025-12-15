@@ -1,6 +1,6 @@
 const WebSocket = require("ws");
-const deviceModel = require("../models/deviceModel");
 const moment = require("moment-timezone");
+const deviceModel = require("../models/deviceModel");
 
 const espAlertSocket = (server) => {
     const wSocket = new WebSocket.Server({ noServer: true });
@@ -29,11 +29,11 @@ const espAlertSocket = (server) => {
                 await deviceModel.findOneAndUpdate(
                     { deviceId: data.deviceId },
                     {
-                        AmbientData: data.ambient,
-                        FreezerData: data.freezer,
+                        espAmbient: data.ambient,
+                        espFreezer: data.freezer,
                         batteryAlert: data.batteryAlert === "LOW",
                         refrigeratorAlert: data.refrigeratorAlert === "ALERT",
-                        lastUpdateTime: moment().tz("Asia/Karachi").format()
+                        // lastUpdateTime: moment().tz("Asia/Karachi").format()
                     },
                     { new: true }
                 );
