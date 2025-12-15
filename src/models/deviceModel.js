@@ -4,7 +4,7 @@ const conditionSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ["temperature", "humidity"],
+    enum: ["freezer", "ambient"],
   },
   operator: {
     type: String,
