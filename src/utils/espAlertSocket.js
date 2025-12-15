@@ -15,8 +15,6 @@ const espAlertSocket = (server) => {
             console.log(message.toString());
 
             try {
-                // const data = JSON.parse(message);
-                // console.log("parsed json data => ", data);
 
                 let data;
 
@@ -27,24 +25,16 @@ const espAlertSocket = (server) => {
                     console.log("non-JSON message:", message.toString());
                     return;
                 }
-                // new checks last heartbeat
-                // if (data.type === "heartbeat") {
-                //     ws.lastBeat = Date.now();
-                //     return;
-                // }
 
                 await deviceModel.findOneAndUpdate(
                     { deviceId: data.deviceId },
                     {
-                        espTemprature: data.temperature,
-                        espHumidity: data.humidity,
-                        espOdour: data.odor,
-                        temperatureAlert: data.temperatureAlert === "HIGH",
-                        humidityAlert: data.humidityAlert === "HIGH",
-                        odourAlert: data.odourAlert === "DETECTED",
+                        AmbientData: data.ambient,
+                        FreezerData: data.freezer,
+                        batteryAlert: data.batteryAlert === "LOW",
+                        refrigeratorAlert: data.refrigeratorAlert === "ALERT",
                         lastUpdateTime: moment().tz("Asia/Karachi").format()
                     },
-                    // { upsert: true, new: true }
                     { new: true }
                 );
             } catch (error) {
@@ -53,18 +43,6 @@ const espAlertSocket = (server) => {
             }
 
         });
-
-        // new if heart beat not found after 10s it shows connection lost in console
-        // setInterval(() => {
-        //     wSocket.clients.forEach((ws) => {
-        //         if (!ws.lastBeat) ws.lastBeat = Date.now();
-
-        //         if (Date.now() - ws.lastBeat > 10000) {
-        //             console.log("ESP32 LOST! Force disconnect.");
-        //             ws.terminate();
-        //         }
-        //     });
-        // }, 5000);
 
         ws.on("close", (code, reason) => {
             console.log(`esp32 disconnected (code: ${code} , reason: ${reason} )`);

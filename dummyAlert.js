@@ -1,71 +1,63 @@
-const WebSocket = require("ws");
+const deviceModel = require("../models/deviceModel");
+const venueModel = require("../models/venueModal");
 
-const SERVER_URL = "ws://localhost:5050/ws/alerts";
+// Returns alertss for all venues under an organization
+const getAlerts = async (req, res) => {
+    try {
+        const { organizationId } = req.params;
 
-const DEVICES = [
-    "device-001",
-    "device-002",
-    "device-003",
-];
+        // Get all venues of this organization
+        const venues = await venueModel.find({ organization: organizationId }).lean();
+        if (!venues.length) return res.status(404).json({ message: "No venues found" });
 
-// generates random values
-function getRandomValue(min, max) {
-    return (Math.random() * (max - min) + min).toFixed(2);
-}
+        const venueIds = venues.map((v) => v._id);
 
-// simulate one device connection
-function simulateDevice(deviceId) {
-    const ws = new WebSocket(SERVER_URL);
+        // Get all devices in these venues
+        const devices = await deviceModel.find({ venue: { $in: venueIds } })
+            .populate("venue", "name")
+            .lean();
 
-    // sends heartbeat 
-    // const heartbeatInterval = setInterval(() => {
-    //     if (ws.readyState === WebSocket.OPEN) {
-    //         const heartbeat = {
-    //             type: "heartbeat",
-    //             deviceId: deviceId,
-    //             timestamp: new Date().toISOString()
-    //         };
+        // Aggregate alerts per venue
+        const result = venues.map((venue) => {
+            const venueDevices = devices.filter((d) => d.venue._id.toString() === venue._id.toString());
 
-    //         ws.send(JSON.stringify(heartbeat));
-    //         console.log(`[${deviceId}] Heartbeat sent`);
-    //     }
-    // }, 5000);
+            const devicesWithAlerts = venueDevices.filter(
+                (d) => d.batteryAlert || d.refrigeratorAlert
+            );
 
-    ws.on("open", () => {
-        console.log(`[${deviceId}] Connected to WebSocket Server`);
+            const refrigeratorAlerts = venueDevices
+                .filter((d) => d.refrigeratorAlert)
+                .map((d) => ({
+                    deviceId: d.deviceId,
+                    ambient: d.AmbientData?.temperature || null,
+                    freezer: d.FreezerData?.temperature || null,
+                }));
 
-        const interval = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-                const payload = {
-                    deviceId,
-                    humidity: getRandomValue(30, 90),
-                    temperature: getRandomValue(10, 40),
-                    humidityAlert: Math.random() > 0.8 ? "HIGH" : "NORMAL",
-                    temperatureAlert: Math.random() > 0.85 ? "HIGH" : "NORMAL",
-                    odourAlert: Math.random() > 0.9 ? "DETECTED" : "NORMAL  ",
-                    timestamp: new Date().toISOString(),
-                };
+            const batteryAlerts = venueDevices
+                .filter((d) => d.batteryAlert)
+                .map((d) => ({
+                    deviceId: d.deviceId,
+                    ambient: d.AmbientData?.temperature || null,
+                    freezer: d.FreezerData?.temperature || null,
+                }));
 
-                ws.send(JSON.stringify(payload));
-                console.log(`[${deviceId}] Sent:`, payload);
-            }
-        }, 10000);
-
-        ws.on("close", () => {
-            console.log(`[${deviceId}] Disconnected from server`);
-            clearInterval(interval);
-            clearInterval(heartbeatInterval);
+            return {
+                venueId: venue._id,
+                venueName: venue.name,
+                totalDevices: venueDevices.length,
+                totalAlerts: devicesWithAlerts.length,
+                refrigeratorAlertCount: refrigeratorAlerts.length,
+                refrigeratorAlertDevices: refrigeratorAlerts,
+                batteryAlertCount: batteryAlerts.length,
+                batteryAlertDevices: batteryAlerts,
+            };
         });
 
-        ws.on("error", (err) => {
-            console.error(`[${deviceId}] WebSocket Error:`, err.message);
-        });
+        res.json({ organizationId, venues: result });
+    } catch (err) {
+        console.error("Error fetching alerts:", err.message);
+        res.status(500).json({ message: "Server error" });
+    }
+};
 
-        ws.on("message", (msg) => {
-            console.log(`[${deviceId}] Message from server: ${msg.toString()}`);
-        });
-    });
-}
-
-// simulation for all devices
-DEVICES.forEach((id) => simulateDevice(id));
+module.exports = { getAlerts };

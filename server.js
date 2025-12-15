@@ -14,24 +14,20 @@ const venueRouter = require("./src/routes/venueRouter");
 const deviceRouter = require("./src/routes/deviceRouter");
 const alertsRouter = require("./src/routes/alertsRouter");
 const authenticate = require("./src/middlewere/authMiddleware");
+const otaRouter = require("./src/routes/otaRoutes");
 
 
 // Utilities
 const { espAlertSocket } = require("./src/utils/espAlertSocket");
+const { initEspOtaSocket } = require("./src/utils/espOtaSocket");
+
 
 dotenv.config();
 dbConnection();
-// const port = 5050;
-// const port = 5000;
 const port = process.env.PORT || 5050;
 const app = express();
 const server = http.createServer(app);
 
-// Middlewares
-// app.use(cors({
-//     origin: process.env.FRONTEND_URL || "*" ,
-//     credentials: true
-// }));
 const allowedOrigins = [
     "https://luckyone-iotfiysolutions.vercel.app",
     "http://localhost:5173"
@@ -63,25 +59,27 @@ app.use("/organization", authenticate, orgRouter);
 app.use("/venue", authenticate, venueRouter);
 app.use("/device", authenticate, deviceRouter);
 app.use("/alert", authenticate, alertsRouter);
-
-app.get("/", (req, res) => {
-    res.send("wellcome ");
-});
-
+app.use("/ota", otaRouter);
 
 const alertWss = espAlertSocket(server);
 
 // alerts ws://ip/localhost:5000/ws/alerts
+// alerts ws://ip/localhost:5000/ws/ota
 server.on("upgrade", (req, socket, head) => {
     if (req.url === "/ws/alerts") {
         alertWss.handleUpgrade(req, socket, head, (ws) => {
             alertWss.emit("connection", ws, req);
+        });
+    } else if (req.url === "/ws/ota") {
+        otaWss.handleUpgrade(req, socket, head, (ws) => {
+            otaWss.emit("connection", ws, req);
         });
     } else {
         socket.destroy(); // reject unknown paths
     }
 });
 
+app.get("/", (req, res) => { res.send("HELLOW FARAZ") });
 
 // Start server
 server.listen(port, () => {
