@@ -50,7 +50,7 @@ const createDevice = async (req, res) => {
                 }
 
                 // Allowed type values
-                const validTypes = ["temperature", "humidity"];
+                const validTypes = ["frezer", "ambient"];
                 if (!validTypes.includes(cond.type)) {
                     return res.status(400).json({
                         message: `Invalid type "${cond.type}". Allowed types: ${validTypes.join(", ")}`,
@@ -99,15 +99,7 @@ const getAllDevices = async (req, res) => {
                 path: "organization",
                 select: "name"
             }
-        })
-        // .populate({
-        //     path: "venue",
-        //     select: "name organization",
-        //     populate: {
-        //         path: "organization",
-        //         select: "name"
-        //     }
-        // .populate("venue", "name");
+        });
 
         if (!devices) return res.status(404).json({ message: "No Devices" });
 
@@ -206,7 +198,7 @@ const updateDevice = async (req, res) => {
                 return res.status(400).json({ message: "Conditions must be an array" });
             }
 
-            const validTypes = ["temperature", "humidity"];
+            const validTypes = ["frezer", "ambient"];
             const validOps = [">", "<"];
 
             for (const cond of conditions) {

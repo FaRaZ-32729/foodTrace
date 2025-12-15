@@ -26,12 +26,13 @@ const deviceSchema = new mongoose.Schema(
     apiKey: { type: String, unique: true, required: true },
 
     // alerts
-    temperatureAlert: { type: Boolean, default: false },
-    humidityAlert: { type: Boolean, default: false },
-    odourAlert: { type: Boolean, default: false },
-    espTemprature: { type: Number, default: null },
-    espHumidity: { type: Number, default: null },
-    espOdour: { type: Number, default: null },
+    frezerAlert: { type: Boolean, default: false },
+    ambientAlert: { type: Boolean, default: false },
+    espFrezer: { type: Number, default: null },
+    espAmbient: { type: Number, default: null },
+
+    versionId: { type: String, default: null },
+
     lastUpdateTime: { type: Date, default: null }
 
   },
