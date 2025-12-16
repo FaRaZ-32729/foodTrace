@@ -2,6 +2,7 @@ const WebSocket = require("ws");
 const fs = require("fs");
 const path = require("path");
 const deviceModel = require("../models/deviceModel");
+const axios = require("axios");
 
 const connectedDevices = new Map();
 const dashboardClients = new Set();
@@ -162,50 +163,91 @@ function broadcastToDashboards(payload) {
 }
 
 // SEND OTA UPDATE ------------------------------------
-function sendOTAUpdate(ws, deviceId, customFirmwarePath) {
-    const firmwarePath = customFirmwarePath || FIRMWARE_PATH;
+// function sendOTAUpdate(ws, deviceId, customFirmwarePath) {
+//     const firmwarePath = customFirmwarePath || FIRMWARE_PATH;
 
-    if (!fs.existsSync(firmwarePath)) {
-        ws.send(JSON.stringify({
-            type: "ota_error",
-            message: `Firmware file not found: ${firmwarePath}`,
-        }));
-        return;
-    }
+//     if (!fs.existsSync(firmwarePath)) {
+//         ws.send(JSON.stringify({
+//             type: "ota_error",
+//             message: `Firmware file not found: ${firmwarePath}`,
+//         }));
+//         return;
+//     }
 
-    const firmwareBuffer = fs.readFileSync(firmwarePath);
-    const firmwareSize = firmwareBuffer.length;
+//     const firmwareBuffer = fs.readFileSync(firmwarePath);
+//     const firmwareSize = firmwareBuffer.length;
 
-    ws.send(JSON.stringify({
-        type: "ota_start",
-        size: firmwareSize,
-        chunks: Math.ceil(firmwareSize / 2048),
-    }));
+//     ws.send(JSON.stringify({
+//         type: "ota_start",
+//         size: firmwareSize,
+//         chunks: Math.ceil(firmwareSize / 2048),
+//     }));
 
-    const chunkSize = 2048;
-    let offset = 0;
+//     const chunkSize = 2048;
+//     let offset = 0;
 
-    const sendChunk = () => {
-        if (offset < firmwareSize) {
-            const chunk = firmwareBuffer.slice(offset, offset + chunkSize);
-            const chunkData = {
-                type: "ota_chunk",
-                offset,
-                data: chunk.toString("base64"),
-                totalSize: firmwareSize,
-            };
+//     const sendChunk = () => {
+//         if (offset < firmwareSize) {
+//             const chunk = firmwareBuffer.slice(offset, offset + chunkSize);
+//             const chunkData = {
+//                 type: "ota_chunk",
+//                 offset,
+//                 data: chunk.toString("base64"),
+//                 totalSize: firmwareSize,
+//             };
 
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(chunkData));
-                offset += chunkSize;
-                setTimeout(sendChunk, 50);
+//             if (ws.readyState === WebSocket.OPEN) {
+//                 ws.send(JSON.stringify(chunkData));
+//                 offset += chunkSize;
+//                 setTimeout(sendChunk, 50);
+//             }
+//         } else {
+//             ws.send(JSON.stringify({ type: "ota_end", status: "complete" }));
+//         }
+//     };
+
+//     setTimeout(sendChunk, 100);
+// }
+
+async function sendOTAUpdate(ws, deviceId, firmwareUrl) {
+    try {
+        const response = await axios.get(firmwareUrl, { responseType: 'arraybuffer' });
+        const firmwareBuffer = Buffer.from(response.data);
+
+        const chunkSize = 2048;
+        let offset = 0;
+
+        const sendChunk = () => {
+            if (offset < firmwareBuffer.length) {
+                const chunk = firmwareBuffer.slice(offset, offset + chunkSize);
+                const chunkData = {
+                    type: "ota_chunk",
+                    offset,
+                    data: chunk.toString("base64"),
+                    totalSize: firmwareBuffer.length,
+                };
+
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(chunkData));
+                    offset += chunkSize;
+                    setTimeout(sendChunk, 50);
+                }
+            } else {
+                ws.send(JSON.stringify({ type: "ota_end", status: "complete" }));
             }
-        } else {
-            ws.send(JSON.stringify({ type: "ota_end", status: "complete" }));
-        }
-    };
+        };
 
-    setTimeout(sendChunk, 100);
+        ws.send(JSON.stringify({
+            type: "ota_start",
+            size: firmwareBuffer.length,
+            chunks: Math.ceil(firmwareBuffer.length / chunkSize),
+        }));
+
+        setTimeout(sendChunk, 100);
+    } catch (err) {
+        console.error("OTA fetch error:", err);
+        ws.send(JSON.stringify({ type: "ota_error", message: err.message }));
+    }
 }
 
 module.exports = { initEspOtaSocket, connectedDevices, sendOTAUpdate, broadcastToDashboards };
