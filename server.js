@@ -24,7 +24,7 @@ const { initEspOtaSocket } = require("./src/utils/espOtaSocket");
 
 dotenv.config();
 dbConnection();
-const port = process.env.PORT || 5050;
+const port = process.env.PORT || 5000;
 const app = express();
 const server = http.createServer(app);
 
@@ -62,6 +62,7 @@ app.use("/alert", authenticate, alertsRouter);
 app.use("/ota", otaRouter);
 
 const alertWss = espAlertSocket(server);
+const otaWss = initEspOtaSocket(server);
 
 // alerts ws://ip/localhost:5000/ws/alerts
 // alerts ws://ip/localhost:5000/ws/ota
