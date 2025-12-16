@@ -72,8 +72,10 @@ const SERVER_URL = "ws://localhost:5050/ws/alerts";
 // List of dummy devices
 const DEVICES = [
     "device-001",
-    "device-002",
     "device-003",
+    "device-005",
+    "device-006",
+    "device-007",
 ];
 
 // Generate random numbers
@@ -89,12 +91,12 @@ function simulateDevice(deviceId) {
         console.log(`[${deviceId}] Connected to server`);
 
         // Heartbeat every 5 seconds
-        const heartbeatInterval = setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: "heartbeat", deviceId }));
-                console.log(`[${deviceId}] Sent heartbeat`);
-            }
-        }, 5000);
+        // const heartbeatInterval = setInterval(() => {
+        //     if (ws.readyState === WebSocket.OPEN) {
+        //         ws.send(JSON.stringify({ type: "heartbeat", deviceId }));
+        //         console.log(`[${deviceId}] Sent heartbeat`);
+        //     }
+        // }, 5000);
 
         // Send dummy alert/data every 10 seconds
         const dataInterval = setInterval(() => {
@@ -103,7 +105,7 @@ function simulateDevice(deviceId) {
                     deviceId,
                     ambient: getRandomValue(20, 40),   // Ambient temperature
                     freezer: getRandomValue(-10, 5),   // Freezer temperature
-                    batteryAlert: Math.random() > 0.8 ? "LOW" : "NORMAL",
+                    batteryAlert: Math.random() > 0.5 ? "LOW" : "NORMAL",
                     refrigeratorAlert: Math.random() > 0.7 ? "ALERT" : "NORMAL",
                 };
 

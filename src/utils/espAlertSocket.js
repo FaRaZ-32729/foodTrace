@@ -13,9 +13,7 @@ const espAlertSocket = (server) => {
 
         ws.on("message", async (message) => {
             console.log(message.toString());
-
             try {
-
                 let data;
 
                 try {
@@ -26,13 +24,18 @@ const espAlertSocket = (server) => {
                     return;
                 }
 
+                if (data.type === "heartbeat") {
+                    ws.lastBeat = Date.now();
+                    return;
+                }
+
                 await deviceModel.findOneAndUpdate(
                     { deviceId: data.deviceId },
                     {
                         espAmbient: data.ambient,
                         espFreezer: data.freezer,
-                        batteryAlert: data.batteryAlert === "LOW",
-                        refrigeratorAlert: data.refrigeratorAlert === "ALERT",
+                        batteryAlert: data.batteryAlert == "LOW",
+                        refrigeratorAlert: data.refrigeratorAlert == "ALERT",
                         // lastUpdateTime: moment().tz("Asia/Karachi").format()
                     },
                     { new: true }
