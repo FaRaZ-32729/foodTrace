@@ -130,7 +130,7 @@ const getAllOTAFiles = async (req, res) => {
 
 
 
-const deleteOTAFile = async (req, res) => {
+const   deleteOTAFile = async (req, res) => {
     try {
         const { id } = req.params;
 
