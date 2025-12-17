@@ -395,7 +395,7 @@ async function sendOTAUpdate(ws, deviceId, firmwareUrl) {
             throw new Error("Invalid ESP32 firmware (missing 0xE9 header)");
         }
 
-        const chunkSize = 1024;
+        const chunkSize = 512;
         let offset = 0;
 
         ws.send(JSON.stringify({
@@ -421,7 +421,7 @@ async function sendOTAUpdate(ws, deviceId, firmwareUrl) {
             }));
 
             offset += chunkSize;
-            setTimeout(sendChunk, 30);
+            setTimeout(sendChunk, 5);
         };
 
         setTimeout(sendChunk, 100);
@@ -443,6 +443,14 @@ function initEspOtaSocket(server) {
     wss.on("connection", (ws, req) => {
         let deviceId = null;
         console.log("🔌 New OTA WebSocket connection");
+
+        const pingInterval = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.ping();
+            }
+        }, 5000);
+
+        ws.on("close", () => clearInterval(pingInterval));
 
         ws.on("message", async (message) => {
             try {
