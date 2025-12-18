@@ -28,49 +28,49 @@
 // // module.exports = uploadFile;
 
 
-// const multer = require("multer");
-// const { CloudinaryStorage } = require("multer-storage-cloudinary");
-// const cloudinary = require("../config/cloudinaryConfig")
-
-// // Cloudinary storage
-
-// const storage = new CloudinaryStorage({
-//     cloudinary: cloudinary,
-//     params: {
-//         folder: "ota_firmware",
-//         resource_type: "raw",
-//         public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`,
-//     },
-// });
-
-
-// // File filter (only .bin)
-// const fileFilter = (req, file, cb) => {
-//     if (file.mimetype !== "application/octet-stream" && !file.originalname.endsWith(".bin")) {
-//         return cb(new Error("Only .bin files are allowed"), false);
-//     }
-//     cb(null, true);
-// };
-
-// const uploadFile = multer({
-//     storage,
-//     fileFilter,
-// });
-
-// module.exports = uploadFile;
-
-
 const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../config/cloudinaryConfig")
 
-// Store files in memory before uploading to Firebase
-const uploadFile = multer({
-    storage: multer.memoryStorage(),
-    fileFilter: (req, file, cb) => {
-        if (!file.originalname.endsWith(".bin")) {
-            return cb(new Error("Only .bin files are allowed"), false);
-        }
-        cb(null, true);
+// Cloudinary storage
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: "ota_firmware",
+        resource_type: "raw",
+        public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\.[^/.]+$/, "")}`,
     },
 });
 
+
+// File filter (only .bin)
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype !== "application/octet-stream" && !file.originalname.endsWith(".bin")) {
+        return cb(new Error("Only .bin files are allowed"), false);
+    }
+    cb(null, true);
+};
+
+const uploadFile = multer({
+    storage,
+    fileFilter,
+});
+
 module.exports = uploadFile;
+
+
+// const multer = require("multer");
+
+// // Store files in memory before uploading to Firebase
+// const uploadFile = multer({
+//     storage: multer.memoryStorage(),
+//     fileFilter: (req, file, cb) => {
+//         if (!file.originalname.endsWith(".bin")) {
+//             return cb(new Error("Only .bin files are allowed"), false);
+//         }
+//         cb(null, true);
+//     },
+// });
+
+// module.exports = uploadFile;
