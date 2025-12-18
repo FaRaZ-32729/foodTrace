@@ -445,8 +445,6 @@ function initEspOtaSocket(server) {
         let deviceId = null;
         console.log("🔌 New OTA WebSocket connection");
 
-        ws.on("close", () => clearInterval(pingInterval));
-
         ws.on("message", async (message) => {
             try {
                 const data = JSON.parse(message.toString());
