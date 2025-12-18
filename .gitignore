@@ -1,6 +1,6 @@
 # Ignore node modules
 node_modules
-
+src/config/firebaseKey.json
 # Ignore environment files
 .env
 env
