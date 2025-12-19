@@ -33,19 +33,30 @@ const allowedOrigins = [
     "http://localhost:5173"
 ];
 
+// app.use(cors({
+//     origin: function (origin, callback) {
+//         if (!origin) return callback(null, true); // allow mobile/postman
+//         if (allowedOrigins.includes(origin)) {
+//             callback(null, true);
+//         } else {
+//             callback(new Error("Not allowed by CORS"));
+//         }
+//     },
+//     credentials: true
+// }));
+
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true); // allow mobile/postman
+        if (!origin) return callback(null, true); // Postman, ESP, mobile
         if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
+            return callback(null, true);
         }
+        callback(new Error("Not allowed by CORS"));
     },
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
-app.options("*" , cors());
 
 
 app.use(express.json());
