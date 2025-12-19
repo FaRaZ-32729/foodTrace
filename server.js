@@ -29,7 +29,7 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-    "https://luckyone-iotfiysolutions.vercel.app",
+    process.env.FRONTEND_URL,
     "http://localhost:5173"
 ];
 
@@ -39,7 +39,7 @@ app.use(cors({
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error  ("Not allowed by CORS"));
+            callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true
