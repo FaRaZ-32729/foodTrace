@@ -302,24 +302,53 @@ function initEspOtaSocket(server) {
         const isDashboard = req.url?.includes("admin=true");
 
         // -------- DASHBOARD CONNECTION --------
+        // if (isDashboard) {
+        //     dashboardClients.add(ws);
+        //     console.log("📊 Dashboard connected");
+
+        //     // Send current device list
+        //     ws.send(JSON.stringify({
+        //         type: "device_list",
+        //         devices: Array.from(connectedDevices.entries()).map(([id, d]) => ({
+        //             deviceId: id,
+        //             status: d.status,
+        //             connectedAt: d.connectedAt,
+        //         }))
+        //     }));
+
+        //     ws.on("close", () => dashboardClients.delete(ws));
+        //     ws.on("error", () => dashboardClients.delete(ws));
+        //     return;
+        // }
+
         if (isDashboard) {
             dashboardClients.add(ws);
             console.log("📊 Dashboard connected");
 
-            // Send current device list
-            ws.send(JSON.stringify({
-                type: "device_list",
-                devices: Array.from(connectedDevices.entries()).map(([id, d]) => ({
+            const deviceList = Array.from(connectedDevices.entries()).map(
+                ([id, d]) => ({
                     deviceId: id,
                     status: d.status,
                     connectedAt: d.connectedAt,
-                }), console.log("device list to  dashboard", devices))
+                    lastHeartbeat: d.lastHeartbeat
+                })
+            );
+
+            // 🔹 Console log device list
+            console.log("📋 Sending device list to dashboard:");
+            console.table(deviceList);
+
+            // Send current device list
+            ws.send(JSON.stringify({
+                type: "device_list",
+                devices: deviceList
             }));
 
             ws.on("close", () => dashboardClients.delete(ws));
             ws.on("error", () => dashboardClients.delete(ws));
             return;
         }
+
 
         // -------- DEVICE CONNECTION --------
         let deviceId = null;
@@ -434,7 +463,7 @@ function initEspOtaSocket(server) {
 
                     const entry = connectedDevices.get(deviceId);
                     if (entry) entry.currentVersionId = null;
-                    
+
                     broadcastToDashboards({
                         type: "ota_result",
                         deviceId,
