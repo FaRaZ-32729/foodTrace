@@ -360,11 +360,23 @@ function initEspOtaSocket(server) {
                 }
 
                 // -------- OTA REQUEST --------
+                // else if (data.type === "ota_request") {
+                //     if (data.firmwareUrl) {
+                //         await sendOTAUpdate(ws, deviceId, data.firmwareUrl);
+                //     }
+                // }
                 else if (data.type === "ota_request") {
                     if (data.firmwareUrl) {
+                        const entry = connectedDevices.get(deviceId);
+
+                        if (entry && data.versionId) {
+                            entry.currentVersionId = data.versionId;
+                        }
+
                         await sendOTAUpdate(ws, deviceId, data.firmwareUrl);
                     }
                 }
+
 
                 // -------- OTA PROGRESS --------
                 else if (data.type === "ota_progress") {
@@ -377,7 +389,37 @@ function initEspOtaSocket(server) {
                 }
 
                 // -------- OTA COMPLETE --------
+                // else if (data.type === "ota_complete") {
+                //     broadcastToDashboards({
+                //         type: "ota_result",
+                //         deviceId,
+                //         status: "success",
+                //     });
+                // }
                 else if (data.type === "ota_complete") {
+                    console.log(`OTA completed successfully for ${deviceId}`);
+
+                    const entry = connectedDevices.get(deviceId);
+
+                    if (entry?.currentVersionId) {
+                        try {
+                            await deviceModel.findOneAndUpdate(
+                                { deviceId },
+                                { versionId: entry.currentVersionId },
+                                { new: true }
+                            );
+
+                            console.log(
+                                `Updated versionId for ${deviceId} → ${entry.currentVersionId}`
+                            );
+                        } catch (err) {
+                            console.error("DB update error:", err);
+                        }
+                    }
+
+                    // cleanup
+                    if (entry) entry.currentVersionId = null;
+
                     broadcastToDashboards({
                         type: "ota_result",
                         deviceId,
@@ -385,8 +427,14 @@ function initEspOtaSocket(server) {
                     });
                 }
 
+
                 // -------- OTA ERROR --------
                 else if (data.type === "ota_error") {
+                    console.error(`OTA failed for ${deviceId}: ${data.message}`);
+
+                    const entry = connectedDevices.get(deviceId);
+                    if (entry) entry.currentVersionId = null;
+                    
                     broadcastToDashboards({
                         type: "ota_result",
                         deviceId,
