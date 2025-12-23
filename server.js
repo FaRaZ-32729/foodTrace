@@ -30,7 +30,8 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
     process.env.FRONTEND_URL,
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "https://api.foodtrace.se"
 ];
 
 // app.use(cors({
@@ -45,18 +46,37 @@ const allowedOrigins = [
 //     credentials: true
 // }));
 
+// app.use(cors({
+//     origin: function (origin, callback) {
+//         if (!origin) return callback(null, true); // Postman, ESP, mobile
+//         if (allowedOrigins.includes(origin)) {
+//             return callback(null, true);
+//         }
+//         callback(new Error("Not allowed by CORS"));
+//     },
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"]
+// }));
+
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true); // Postman, ESP, mobile
+        console.log("🌐 CORS origin received:", origin);
+
+        if (!origin) return callback(null, true);
+
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
+
+        console.log("❌ Blocked by CORS:", origin);
         callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 
 
 app.use(express.json());
